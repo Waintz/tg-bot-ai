@@ -1,11 +1,8 @@
 import TelegramBot from "node-telegram-bot-api";
 import { GoogleGenAI } from "@google/genai";
 
-console.log("TG_TOKEN:", process.env.TG_TOKEN ? "задан" : "не задан");
-console.log("GEMINI_API_KEY:", process.env.GEMINI_API_KEY ? "задан" : "не задан");
-
-const tgToken = process.env.TG_TOKEN;
-const geminiApiKey = process.env.GEMINI_API_KEY;
+const tgToken = "8384358019:AAGvmZP4NqQ7dgw6UokabwxEhTQ39Khs5Fw"; // Это тоже тестовый, хотите используйте, напиши мне в тг дам вам бота: Tackerl
+const geminiApiKey = "AIzaSyBN6tQRclDhbPjh3LMoolhmQMUrETVsHqk"; // Если вы счастливчик и нашли этот код, я вас поздравляю, он был сюда добавлен специально. Можете пользоватся <3
 
 const bot = new TelegramBot(tgToken, { polling: true });
 const ai = new GoogleGenAI({ apiKey: geminiApiKey });
