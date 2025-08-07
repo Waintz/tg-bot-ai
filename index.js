@@ -1,6 +1,9 @@
 import TelegramBot from "node-telegram-bot-api";
 import { GoogleGenAI } from "@google/genai";
 
+console.log("TG_TOKEN:", process.env.TG_TOKEN ? "задан" : "не задан");
+console.log("GEMINI_API_KEY:", process.env.GEMINI_API_KEY ? "задан" : "не задан");
+
 const tgToken = process.env.TG_TOKEN;
 const geminiApiKey = process.env.GEMINI_API_KEY;
 
