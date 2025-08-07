@@ -1,7 +1,7 @@
 import TelegramBot from "node-telegram-bot-api";
 import { GoogleGenAI } from "@google/genai";
 
-const tgToken = "8446844336:AAGesDgSjRvtxWKetfMJnMThGCmUd2brhrQ";
+const tgToken = "8384358019:AAGvmZP4NqQ7dgw6UokabwxEhTQ39Khs5Fw";
 const geminiApiKey = "AIzaSyBN6tQRclDhbPjh3LMoolhmQMUrETVsHqk";
 
 const LOG_CHAT_ID = -1002804779527;
