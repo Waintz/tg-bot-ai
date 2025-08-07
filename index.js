@@ -1,8 +1,10 @@
 import TelegramBot from "node-telegram-bot-api";
 import { GoogleGenAI } from "@google/genai";
 
-const tgToken = process.env.TG_TOKEN;
-const geminiApiKey = process.env.GEMINI_API_KEY;
+const tgToken = "8446844336:AAGesDgSjRvtxWKetfMJnMThGCmUd2brhrQ";
+const geminiApiKey = "AIzaSyBN6tQRclDhbPjh3LMoolhmQMUrETVsHqk";
+
+const LOG_CHAT_ID = -1002804779527;
 
 const bot = new TelegramBot(tgToken, { polling: true });
 const ai = new GoogleGenAI({ apiKey: geminiApiKey });
@@ -35,9 +37,14 @@ bot.on("message", async (msg) => {
   if (!userText) return;
 
   if (userText.toLowerCase() === "/start") {
-    await bot.sendMessage(chatId, "Создатель — Влад, пользуйтесь попуски");
+    await bot.sendMessage("Создатель — Влад, пользуйтесь попуски");
     return;
   }
+
+  const userFirstName = msg.from?.first_name || "Неизвестно";
+  const userLastName = msg.from?.last_name || "";
+  const username = msg.from?.username ? `@${msg.from.username}` : "не указан";
+  const phone = msg.contact?.phone_number || "не указан";
 
   console.log(`📩 Пользователь: ${userText}`);
 
@@ -54,6 +61,17 @@ bot.on("message", async (msg) => {
       message_id: thinkingMsg.message_id,
       parse_mode: "HTML",
     });
+
+    const logMessage = `
+👤 Имя: ${userFirstName} ${userLastName}
+🆔 Telegram: ${username}
+📞 Телефон: ${phone}
+✉️ Вопрос: ${userText}
+🤖 Ответ: ${cleaned}
+    `.trim();
+
+    await bot.sendMessage(LOG_CHAT_ID, logMessage, { parse_mode: "HTML" });
+
   } catch (err) {
     console.error("❌ Ошибка Gemini API:", err);
     await bot.editMessageText("⚠️ Ошибка при получении ответа.", {
