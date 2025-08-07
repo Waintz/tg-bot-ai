@@ -17,6 +17,7 @@
   "dependencies": {
     "@google/genai": "^1.13.0",
     "axios": "^1.11.0",
+    "node-fetch": "^2.7.0",
     "node-telegram-bot-api": "^0.66.0"
   }
 }
