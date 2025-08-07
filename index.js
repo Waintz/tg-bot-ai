@@ -9,25 +9,15 @@ const LOG_CHAT_ID = -1002804779527;
 const bot = new TelegramBot(tgToken, { polling: true });
 const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
+// 🧠 Память для каждого чата
+const chatHistory = new Map();
+
 function cleanResponse(text) {
   return text
     .replace(/\$\$([^$]+)\$\$/g, "$1")
     .replace(/\$([^$]+)\$/g, "$1")
     .replace(/\*\*+/g, "")
     .trim();
-}
-
-async function getGeminiResponse(prompt) {
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: prompt,
-    config: {
-      thinkingConfig: {
-        thinkingBudget: 0,
-      },
-    },
-  });
-  return response.text;
 }
 
 bot.on("message", async (msg) => {
@@ -37,7 +27,7 @@ bot.on("message", async (msg) => {
   if (!userText) return;
 
   if (userText.toLowerCase() === "/start") {
-    await bot.sendMessage("Создатель — Влад, пользуйтесь попуски");
+    await bot.sendMessage(chatId, "Создатель — Влад, пользуйтесь попуски");
     return;
   }
 
@@ -48,11 +38,37 @@ bot.on("message", async (msg) => {
 
   console.log(`📩 Пользователь: ${userText}`);
 
+  // 🧠 Получаем или создаем историю чата
+  const history = chatHistory.get(chatId) || [];
+
+  // ➕ Добавляем сообщение пользователя
+  history.push({ role: "user", parts: [{ text: userText }] });
+
+  // ✂️ Ограничим до 10 последних сообщений
+  while (history.length > 10) {
+    history.shift(); // Удаляем самое старое
+  }
+
   const thinkingMsg = await bot.sendMessage(chatId, "🤖 Бот думает...");
 
   try {
-    const rawResponse = await getGeminiResponse(userText);
-    const cleaned = cleanResponse(rawResponse);
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: history,
+    });
+
+    const cleaned = cleanResponse(response.text);
+
+    // ➕ Добавляем ответ бота в историю
+    history.push({ role: "model", parts: [{ text: cleaned }] });
+
+    // ✂️ Ограничим снова до 10 после добавления ответа
+    while (history.length > 10) {
+      history.shift();
+    }
+
+    // 🧠 Сохраняем обновлённую историю
+    chatHistory.set(chatId, history);
 
     console.log(`💬 Ответ GPT: ${cleaned}`);
 
@@ -82,3 +98,4 @@ bot.on("message", async (msg) => {
 });
 
 console.log("🚀 Telegram бот запущен и слушает сообщения...");
+
