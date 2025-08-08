@@ -4,7 +4,7 @@ import fetch from "node-fetch";
 import iconv from "iconv-lite";
 import fs from "fs";
 
-const tgToken = "8446844336:AAGesDgSjRvtxWKetfMJnMThGCmUd2brhrQ";
+const tgToken = "8290265239:AAGTL7a79RbNIICJesDGwXEUOls5FtHU1MA";
 const geminiApiKey = "AIzaSyBN6tQRclDhbPjh3LMoolhmQMUrETVsHqk";
 const LOG_CHAT_ID = -1002804779527;
 
