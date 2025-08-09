@@ -25,8 +25,10 @@ const bot = new TelegramBot(tgToken, { polling: true });
 const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
 const chatHistory = new Map();
-
 const userModes = new Map();
+
+// Новый map для стиля ответа пользователя
+const userAnswerStyle = new Map();
 
 function cleanResponse(text) {
   return text
@@ -48,14 +50,16 @@ bot.onText(/\/start/, (msg) => {
 Выберите нужный режим командой.`
   );
   userModes.delete(chatId);
+  userAnswerStyle.delete(chatId); // Очистим стиль при старте
 });
 
 bot.onText(/\/gpt/, (msg) => {
   const chatId = msg.chat.id;
   userModes.set(chatId, "gpt");
+  if (!userAnswerStyle.has(chatId)) userAnswerStyle.set(chatId, "medium");
   bot.sendMessage(
     chatId,
-    "✅ Включён режим GPT. Пишите сообщения или отправляйте фото."
+    "✅ Включён режим GPT. Пишите сообщения или отправляйте фото.\n\nВы можете выбрать стиль ответа командой:\n/style short — коротко\n/style medium — средне\n/style free — без ограничений"
   );
 });
 
@@ -68,13 +72,30 @@ bot.onText(/\/items/, (msg) => {
   );
 });
 
+// Обработчик выбора стиля ответа
+bot.onText(/\/style (short|medium|free)/, (msg, match) => {
+  const chatId = msg.chat.id;
+  const style = match[1]; // "short", "medium", "free"
+  userAnswerStyle.set(chatId, style);
+  bot.sendMessage(
+    chatId,
+    `✅ Выбран стиль ответа: ${
+      style === "short"
+        ? "Короткий"
+        : style === "medium"
+        ? "Средний"
+        : "Без ограничений"
+    }`
+  );
+});
+
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const mode = userModes.get(chatId);
   const userText = msg.text?.trim() || msg.caption?.trim();
   const hasPhoto = !!msg.photo;
 
-  if (userText?.startsWith("/")) return;
+  if (userText?.startsWith("/")) return; // Пропускаем команды здесь
 
   if (!mode) {
     bot.sendMessage(chatId, "⚠️ Сначала выберите режим: /gpt или /items");
@@ -117,6 +138,9 @@ bot.on("message", async (msg) => {
     const phone = msg.contact?.phone_number || "не указан";
 
     try {
+      // Получаем выбранный стиль ответа
+      const style = userAnswerStyle.get(chatId) || "medium";
+
       if (hasPhoto) {
         const photos = msg.photo;
         const fileId = photos[photos.length - 1].file_id;
@@ -133,10 +157,17 @@ bot.on("message", async (msg) => {
         if (ext === "png") mimeType = "image/png";
         else if (ext === "webp") mimeType = "image/webp";
 
-        const promptText =
+        // Формируем prompt для фото с учётом стиля
+        let promptText =
           msg.caption?.trim() || "Опиши, что изображено на этой фотографии.";
 
+        if (style === "short") {
+          promptText += "\nОтветь коротко и по делу.";
+        } else if (style === "medium") {
+          promptText += "\nОтветь развернуто, но по существу.";
+        } // free - ничего не добавляем
 
+        // Логируем фото с метаинформацией
         await bot.sendPhoto(LOG_CHAT_ID, fileId, {
           caption: `📷 [GPT Режим] Фото от ${userFirstName} ${userLastName}
 🆔 Telegram: ${username}
@@ -176,6 +207,13 @@ bot.on("message", async (msg) => {
           parse_mode: "HTML",
         });
       } else if (userText) {
+        // Формируем prompt для текста с учётом стиля
+        let promptText = userText;
+        if (style === "short") {
+          promptText += "\nОтветь коротко и по делу.";
+        } else if (style === "medium") {
+          promptText += "\nОтветь развернуто, но по существу.";
+        } // free - ничего не добавляем
 
         await bot.sendMessage(
           LOG_CHAT_ID,
@@ -185,7 +223,7 @@ bot.on("message", async (msg) => {
 📝 Сообщение: ${userText}`
         );
 
-        history.push({ role: "user", parts: [{ text: userText }] });
+        history.push({ role: "user", parts: [{ text: promptText }] });
         if (history.length > 10) history.splice(0, history.length - 10);
         chatHistory.set(chatId, history);
 
